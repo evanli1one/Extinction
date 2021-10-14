@@ -1,8 +1,7 @@
 title = "Extinction";
 
 description = `
-Click, drag, and release to toss
-`;
+thing`;
 
 characters = [
 ];
