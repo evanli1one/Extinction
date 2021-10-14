@@ -9,11 +9,13 @@ characters = [
 const G = {
     WIDTH: 600,
     HEIGHT: 600,
+
+    GRAVITY: 2,
 };
 
 options = {
     viewSize: {x: G.WIDTH, y: G.HEIGHT},
-    theme: "shapeDark",
+    //theme: "shapeDark",
     isReplayEnabled: true,
     // isPlayingBgm: true,
     seed: 3,
@@ -21,10 +23,11 @@ options = {
 };
 
 /**
-* @typedef { object } Draggable
+* @typedef { object } Rock
 * @property { Color } color
 * @property { Vector } pos
 * @property { Vector } velocity
+* @property { boolean } Enablegravity
 * @property { Number } decel
 * @property { Number } stopSpeed
 * @property { Number } throwCooldown
@@ -39,7 +42,7 @@ options = {
 * @property { Number } decel
 * @property { Number } speed
 * @property { Number } throwSpeed
-* @property { Draggable } selected
+* @property { Rock } selected
 */
 
 /**
@@ -48,9 +51,9 @@ options = {
 let player;
 
 /**
-* @type  { Draggable[] }
+* @type  { Rock[] }
 */
-let draggables;
+let rocks;
 
 function update() {
 
@@ -60,7 +63,7 @@ function update() {
 
     RenderPlayer();
 
-    RenderDraggables();
+    RenderRocks();
 
     ThrowInput();
 }
@@ -77,17 +80,8 @@ function Start()
         selected: null
     }
 
-    draggables = [];
-
-    draggables.push({
-        color: "green",
-        pos: vec(rnd(0, G.WIDTH), rnd(0, G.HEIGHT)),
-        velocity: vec(0, 0),
-        decel: 0.95,
-        stopSpeed: 1,
-        throwCooldown: 60,
-        throwCooldownCount: 0,
-    })
+    rocks = [];
+    times(10, () => {SpawnRock()});
 }
 
 function RenderPlayer()
@@ -112,35 +106,48 @@ function RenderPlayer()
     box(player.pos.x, player.pos.y, 20);
 }
 
-function RenderDraggables()
-{
-    draggables.forEach(draggable => {
-        let slowDownVector = DecelVector(draggable.velocity, draggable.decel);
-        draggable.velocity = slowDownVector;
+function SpawnRock() {
+    rocks.push({
+        color: "green",
+        pos: vec(0, rnd((G.HEIGHT * 0.15), (G.HEIGHT * .5))),
+        velocity: vec(rnd(3,6), 0),
+        decel: 0.95,
+        Enablegravity: false,
+        stopSpeed: 1,
+        throwCooldown: 60,
+        throwCooldownCount: 0,
+    })
+}
 
-        if(draggable.velocity.length <= draggable.stopSpeed)
+function RenderRocks()
+{
+    rocks.forEach(rock => {
+        // let slowDownVector = DecelVector(rock.velocity, rock.decel);
+        // rock.velocity = slowDownVector;
+
+        if(rock.velocity.length <= rock.stopSpeed)
         {
-            draggable.velocity = vec(0, 0);
+            rock.velocity = vec(0, 0);
         }
         else
         {
-            draggable.pos.add(draggable.velocity);
+            rock.pos.add(rock.velocity);
         }
 
-        draggable.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
+        rock.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
 
-        color(draggable.color);
-        let isOnPlayer = box(draggable.pos.x, draggable.pos.y, 10)
+        color(rock.color);
+        let isOnPlayer = box(rock.pos.x, rock.pos.y, 10)
             .isColliding.rect.cyan;
 
-        if(isOnPlayer && draggable.throwCooldownCount == 0)
+        if(isOnPlayer && rock.throwCooldownCount == 0)
         {
-            player.selected = draggable;
+            player.selected = rock;
         }
 
-        if(draggable.throwCooldownCount != 0)
+        if(rock.throwCooldownCount != 0)
         {
-            draggable.throwCooldownCount--;
+            rock.throwCooldownCount--;
         }
     });
 }
@@ -154,6 +161,7 @@ function ThrowInput()
         player.selected.velocity = vec(player.velocity.x * player.throwSpeed,
             player.velocity.y * player.throwSpeed);
         player.selected = null;
+        player.selected.Enablegravity == true;
     }
 }
 
