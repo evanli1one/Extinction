@@ -4,6 +4,15 @@ description = `
 thing`;
 
 characters = [
+`
+ggggg
+gg
+gg  g
+gggggg
+ggggg
+gg  gg
+
+`
 ];
 
 const G = {
@@ -15,7 +24,7 @@ const G = {
 
 options = {
     viewSize: {x: G.WIDTH, y: G.HEIGHT},
-    //theme: "shapeDark",
+    theme: "shapeDark",
     isReplayEnabled: true,
     // isPlayingBgm: true,
     seed: 3,
@@ -53,7 +62,7 @@ let player;
 /**
 * @type  { Rock[] }
 */
-let rocks;
+let rocks, dinos;
 
 function update() {
 
@@ -64,6 +73,8 @@ function update() {
     RenderPlayer();
 
     RenderRocks();
+
+    RenderDinos();
 
     ThrowInput();
 }
@@ -82,6 +93,8 @@ function Start()
 
     rocks = [];
     times(10, () => {SpawnRock()});
+    dinos = [];
+    times(10, () => {SpawnDino()});
 }
 
 function RenderPlayer()
@@ -108,6 +121,20 @@ function RenderPlayer()
 
 function SpawnRock() {
     rocks.push({
+        color: "black",
+        pos: vec(0, rnd((G.HEIGHT * 0.15), (G.HEIGHT * .5))),
+        velocity: vec(rnd(3,6), 0),
+        decel: 0.95,
+        Enablegravity: false,
+        stopSpeed: 1,
+        throwCooldown: 60,
+        throwCooldownCount: 0,
+    })
+}
+
+function SpawnDino(){
+    //spawns a dino
+    dinos.push({
         color: "green",
         pos: vec(0, rnd((G.HEIGHT * 0.15), (G.HEIGHT * .5))),
         velocity: vec(rnd(3,6), 0),
@@ -148,6 +175,39 @@ function RenderRocks()
         if(rock.throwCooldownCount != 0)
         {
             rock.throwCooldownCount--;
+        }
+    });
+}
+
+function RenderDinos()
+{
+    //used to render in the dinos
+    dinos.forEach(dino => {
+        // let slowDownVector = DecelVector(rock.velocity, rock.decel);
+        // rock.velocity = slowDownVector;
+
+        if(dino.velocity.length <= dino.stopSpeed)
+        {
+            dino.velocity = vec(0, 0);
+        }
+        else
+        {
+            dino.pos.add(dino.velocity);
+        }
+
+        dino.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
+
+        color(dino.color);
+        let isOnPlayer = char("a", 50, 50).isColliding.char.cyan; //where we wanna swap out a sprite
+
+        if(isOnPlayer && dino.throwCooldownCount == 0)
+        {
+            player.selected = dino;
+        }
+
+        if(dino.throwCooldownCount != 0)
+        {
+            dino.throwCooldownCount--;
         }
     });
 }
