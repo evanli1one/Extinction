@@ -141,6 +141,10 @@ let skyTopHeight = G.HEIGHT * 0.3
 let groundHeight = G.HEIGHT * 0.7
 let maxDinos = 10, maxFriends = 3;
 
+// Score Combo
+let lastkill;
+let killcombo;
+
 function update() {
 
     if (!ticks) {
@@ -285,12 +289,13 @@ function RenderFriendly()
 
         isCollideWithRock = char(addWithCharCode("b", floor(ticks / 15) % 2), friend.pos.x , friend.pos.y, 
             {scale: {x: friend.size, y: friend.size}}).isColliding.char.a;
-        if(isCollideWithRock) { //the asteriod has hit the friendly!
-            score-=1;
-            //score (subtract from score for hitting the friendly)
-            //sound (make a nice explosion sound or equivalent)
-            //particle (make a red splat or explosion or equivalent)
-        }
+            if(isCollideWithRock) { //the asteriod has hit the friendly!
+                let minus = -5;
+                addScore(minus,friend.pos);
+                //score (subtract from score for hitting the friendly)
+                //sound (make a nice explosion sound or equivalent)
+                //particle (make a red splat or explosion or equivalent)
+            }
         return isCollideWithRock;
     });
 }
@@ -416,12 +421,22 @@ function RenderDinos()
          //where we wanna swap out a sprite
         
             //{scale: {x: dino.size, y: dino.size}}).isColliding.rect.light_black; //where we wanna swap out a sprite
-        if(isCollideWithRock) { //the asteriod has hit the dino!
-            score+=1;
-            //score (add to score for hitting the dino)
-            //sound (make a nice explosion sound or equivalent)
-            //particle (make a red splat or explosion or equivalent)
-        }
+            if(isCollideWithRock) { //the asteriod has hit the dino!
+                //score
+                let points;
+                if(lastkill + 20 >= ticks){
+                    points=Math.pow(2,(killcombo+1));
+                    killcombo++;
+                } else {
+                    points=1;
+                    killcombo = 0;
+                }
+                addScore(points,dino.pos);
+                lastkill = ticks;
+                //score (add to score for hitting the dino)
+                //sound (make a nice explosion sound or equivalent)
+                //particle (make a red splat or explosion or equivalent)
+            }
         return isCollideWithRock;
     });
 }
