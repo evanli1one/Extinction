@@ -74,6 +74,7 @@ options = {
 * @property { Number } size
 * @property { Number } timer
 * @property { Boolean } direction
+* @property { number } turnInterval
 */
 
 /**
@@ -210,6 +211,7 @@ function SpawnDinos() {
             size: 3,
             timer: 0,
             direction: true,
+            turnInterval: rndi(2,4),
         });
     }
 }
@@ -287,11 +289,11 @@ function RenderDinos()
         if (ticks % (60) == 0){ //need something like this so that they don't move in unison (can't just use dino.timer += ticks)
             dino.timer++;
         }
-        if(dino.timer%2 == 0 && dino.direction){
+        if(dino.timer%dino.turnInterval == 0 && dino.direction){
             dino.velocity.x *= -1;
             dino.direction = false;
         }
-        else if(dino.timer%2 != 0 && dino.direction == false){
+        else if(dino.timer%dino.turnInterval != 0 && dino.direction == false){
             dino.velocity.x *= -1;
             dino.direction = true;
         }
