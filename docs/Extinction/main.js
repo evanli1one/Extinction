@@ -72,6 +72,7 @@ options = {
 * @property { Vector } pos
 * @property { Vector } velocity
 * @property { Number } size
+* @property { Number } timer
 */
 
 /**
@@ -199,12 +200,14 @@ function SpawnRocks() {
 }
 function SpawnDinos() {
     //spawns a dino
+    //
     if (ticks % (60) == 0) { //TODO: add?: || rockArray.length < 1
         dinoArray.push({
             color: "green",
             pos: vec(0, rnd(groundHeight + 10, G.HEIGHT - 3)),
             velocity: vec(rnd(1, 3), 0),
             size: 3,
+            timer: 5,
         });
     }
 }
@@ -276,6 +279,9 @@ function RenderDinos()
     dinoArray.forEach(dino => {
         // let slowDownVector = rock.velocity.mult() rock.decel);
         // rock.velocity = slowDownVector;
+
+        //we can change velocity to change it's direction based on the timer variable
+        //don't forget, dino.velocity/dino.timer refers to that specific dinos var
         dino.pos.add(dino.velocity);
         dino.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
         color(dino.color);
