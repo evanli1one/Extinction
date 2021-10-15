@@ -15,12 +15,19 @@ lll ll
 `,
     //b: UFO (AKA player)
     `
- bbb
-bbbbb
+ LLL
+LLLLL
 l l l
-bbbbb
- bbb
-`, //c: dinoArray!
+LLLLL
+ LLL
+`,    //c: UFO (AKA player)
+`
+ LLL
+LLLLL
+ l l
+LLLLL
+ LLL
+`, //d: dino (frame 1 of 2)
     `
 gggggg
 g gggg
@@ -28,6 +35,14 @@ gggg
   gggg
  ggggg
   g  g
+`, //e: dino (frame 1 of 2)
+    `
+gggggg
+g gggg
+gggg
+  gggg
+ggggg
+ g  g
 `
 ];
 
@@ -59,6 +74,7 @@ options = {
 * @property { Vector } pos
 * @property { Vector } velocity
 * @property { Boolean } enableGravity
+* @property { Number } rotation
 * @property { Number } size
 * @property { Number } decel
 * @property { Number } offScreenDist
@@ -189,7 +205,7 @@ function RenderPlayer() {
     // color(player.color);
     // box(player.pos.x, player.pos.y, player.size);
     color("black");
-    char("b", player.pos.x, player.pos.y, {scale: {x: 3, y: 3}});
+    char(addWithCharCode("b", floor(ticks / 15) % 2), player.pos.x, player.pos.y, {scale: {x: 3, y: 3}});
 }
 
 function RenderBackground()
@@ -216,6 +232,7 @@ function SpawnRocks() {
             decel: 0.95,
             enableGravity: false,
             size: 2,
+            rotation: (rndi(0,2) == 1) ? 0 : 45,
             offScreenDist: 20,
             stopSpeed: 1,
             throwCooldown: 60,
@@ -261,7 +278,7 @@ function RenderFriendly()
         friend.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
         color(friend.color);
 
-        isCollideWithRock = char("b", friend.pos.x , friend.pos.y, 
+        isCollideWithRock = char(addWithCharCode("b", floor(ticks / 15) % 2), friend.pos.x , friend.pos.y, 
             {scale: {x: friend.size, y: friend.size}}).isColliding.char.a;
         if(isCollideWithRock) { //the asteriod has hit the friendly!
             score-=1;
@@ -277,12 +294,15 @@ function RenderRocks()
 {
     remove(rockArray, rock => {
         rock.pos.add(rock.velocity);
-
         color(rock.color);
         //let isOnPlayer = box(rock.pos.x, rock.pos.y, rock.size)
             //.isColliding.char.b;
         let isOnPlayer = char("a", rock.pos.x, rock.pos.y, 
-            {scale: {x: rock.size, y: rock.size}}).isColliding.char.b;
+            {scale: {x: rock.size, y: rock.size}, rotation: rock.rotation}).isColliding.char.b;
+        if(!isOnPlayer) {
+            isOnPlayer = char("a", rock.pos.x, rock.pos.y, 
+                {scale: {x: rock.size, y: rock.size}, rotation: rock.rotation}).isColliding.char.c;
+        }
         if(rock.enableGravity && rock.pos.y > skyTopHeight)
         {
             // Decelerate rock
@@ -381,11 +401,11 @@ function RenderDinos()
                        
         }
         if(dino.flip == 1){
-            isCollideWithRock = char("c", dino.pos.x , dino.pos.y, 
+            isCollideWithRock = char(addWithCharCode("d", floor((ticks + (dino.timer)) / 30) % 2), dino.pos.x , dino.pos.y, 
             {mirror:{x: 1, y: 1}, scale: {x: dino.size, y: dino.size}}).isColliding.char.a;
         }
         else if (dino.flip == -1){
-            isCollideWithRock = char("c", dino.pos.x , dino.pos.y, 
+            isCollideWithRock = char(addWithCharCode("d", floor((ticks + (dino.timer)) / 30) % 2), dino.pos.x , dino.pos.y, 
             {mirror:{x: -1, y: 1}, scale: {x: dino.size, y: dino.size}}).isColliding.char.a;
         }
          //where we wanna swap out a sprite
