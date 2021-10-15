@@ -4,7 +4,7 @@ description = `
 thing`;
 
 characters = [
-    //a: asteroids (AKA rocks)
+    //a: asteroids (AKA rockArray)
     `
  llll
 ll lll 
@@ -19,7 +19,7 @@ l l l
 bbbbb
 l l l
  bbb
-`, //c: dinos!
+`, //c: dinoArray!
     `
 ggggg
 gg
@@ -95,12 +95,12 @@ let player;
 /**
 * @type  { Rock[] }
 */
-let rocks;
+let rockArray;
 
 /**
 * @type  { Dino[] }
 */
-let dinos;
+let dinoArray;
 
 
 let gravityEnableHeight = G.HEIGHT * 0.3
@@ -119,7 +119,7 @@ function update() {
     SpawnRocks();
     RenderRocks();
 
-    SpawnDino();
+    SpawnDinos();
     RenderDinos();
 
     ThrowInput();
@@ -138,8 +138,8 @@ function Start() {
         selected: null
     }
 
-    rocks = [];
-    dinos = [];
+    rockArray = [];
+    dinoArray = [];
 }
 
 function RenderPlayer() {
@@ -160,13 +160,15 @@ function RenderPlayer() {
     player.pos.clamp(player.size/2, G.WIDTH - player.size/2,
         player.size/2, gravityEnableHeight - player.size/2);
 
-    color(player.color);
-    box(player.pos.x, player.pos.y, player.size);
+    // color(player.color);
+    // box(player.pos.x, player.pos.y, player.size);
+    color("black");
+    char("b", player.pos.x, player.pos.y, {scale: {x: 3, y: 3}});
 }
 
 function RenderBackground()
 {
-    color("black");
+    color("white");
     rect(0, 0, G.WIDTH, gravityEnableHeight);
     color("light_cyan");
     rect(0, gravityEnableHeight, G.WIDTH, G.HEIGHT);
@@ -176,8 +178,8 @@ function RenderBackground()
 }
 
 function SpawnRocks() {
-    if (ticks % (60) == 0) { //TODO: add?: || rocks.length < 1
-        rocks.push({
+    if (ticks % (60) == 0) { //TODO: add?: || rockArray.length < 1
+        rockArray.push({
             color: "light_black",
             hotColor: "red",
             particleColor1: "red",
@@ -192,16 +194,16 @@ function SpawnRocks() {
             stopSpeed: 1,
             throwCooldown: 60,
             throwCooldownCount: 0,
-        })
+        });
     }
 }
-function SpawnDino() {
+function SpawnDinos() {
     //spawns a dino
-    if (ticks % (60) == 0) { //TODO: add?: || rocks.length < 1
-        dinos.push({
+    if (ticks % (60) == 0) { //TODO: add?: || rockArray.length < 1
+        dinoArray.push({
             color: "green",
             pos: vec(0, rnd(groundHeight + 10, G.HEIGHT - 3)),
-            velocity: vec(rnd(3,6), 0),
+            velocity: vec(rnd(1, 3), 0),
             size: 3,
         });
     }
@@ -209,12 +211,12 @@ function SpawnDino() {
 
 function RenderRocks()
 {
-    remove(rocks, rock => {
+    remove(rockArray, rock => {
         rock.pos.add(rock.velocity);
 
         color(rock.color);
         let isOnPlayer = box(rock.pos.x, rock.pos.y, rock.size)
-            .isColliding.rect.cyan;
+            .isColliding.char.b;
         
         if(rock.enableGravity && rock.pos.y > gravityEnableHeight)
         {
@@ -236,7 +238,7 @@ function RenderRocks()
         return (!rock.pos.isInRect(-rock.offScreenDist, -rock.offScreenDist,
             2*rock.offScreenDist + G.WIDTH, 2*rock.offScreenDist + G.HEIGHT));
     });
-    remove(rocks, (rock) => {
+    remove(rockArray, (rock) => {
         //rock.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
         if (rock.pos.x > G.WIDTH || rock.pos.y > G.HEIGHT) //TODO: G.WIDTH + rock.width, G.HEIGHT + rock.height
             return true;
@@ -270,14 +272,15 @@ function RenderHeatEffects(rock)
 
 function RenderDinos()
 {
-    //used to render in the dinos
-    dinos.forEach(dino => {
+    //used to render in the dinoArray
+    dinoArray.forEach(dino => {
         // let slowDownVector = rock.velocity.mult() rock.decel);
         // rock.velocity = slowDownVector;
         dino.pos.add(dino.velocity);
         dino.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
         color(dino.color);
-        let isCollideWithRock = char("c", dino.pos.x, dino.pos.y, {scale: {x: dino.size, y: dino.size}}).isColliding.char.black; //where we wanna swap out a sprite
+        let isCollideWithRock = char("c", dino.pos.x, dino.pos.y, 
+        {scale: {x: dino.size, y: dino.size}}).isColliding.char.black; //where we wanna swap out a sprite
         //console.log(isCollideWithRock);
     });
 }
