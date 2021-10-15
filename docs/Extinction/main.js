@@ -160,16 +160,6 @@ function SpawnRocks() {
         })
     }
 }
-function SpawnDino() {
-    //spawns a dino
-    if (ticks % (60) == 0) { //TODO: add?: || rocks.length < 1
-        dinos.push({
-            color: "green",
-            pos: vec(0, rnd(G.HEIGHT * 0.15, G.HEIGHT * .5)),
-            velocity: vec(rnd(3, 4), 0),
-        });
-    }
-}
 
 function RenderRocks() {
     rocks.forEach(rock => {
@@ -205,6 +195,17 @@ function RenderRocks() {
     });
 }
 
+function SpawnDino() {
+    //spawns a dino
+    if (ticks % (60) == 0) { //TODO: add?: || rocks.length < 1
+        dinos.push({
+            color: "green",
+            pos: vec(rnd(0,G.WIDTH), G.HEIGHT - 3),
+            velocity: vec(rnd(3, 4), 0),
+        });
+    }
+}
+
 function RenderDinos() {
     //used to render in the dinos
     dinos.forEach(dino => {
@@ -212,9 +213,9 @@ function RenderDinos() {
         // rock.velocity = slowDownVector;
         dino.pos.add(dino.velocity);
         dino.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
-        console.log(dino.velocity);
         color(dino.color);
-        let isOnPlayer = char("c", 50, 50).isColliding.char.black; //where we wanna swap out a sprite
+        let isCollideWithRock = char("c", dino.pos.x, dino.pos.y).isColliding.char.black; //where we wanna swap out a sprite
+        //console.log(isCollideWithRock);
     });
 }
 
