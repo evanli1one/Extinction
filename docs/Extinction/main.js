@@ -4,23 +4,23 @@ description = `
 thing`;
 
 characters = [
-//a: asteroids (AKA rocks)
-`
+    //a: asteroids (AKA rocks)
+    `
  llll
 ll lll 
 l ll l
 lll ll
  llll
 `,
-//b: UFO (AKA player)
-`
+    //b: UFO (AKA player)
+    `
  bbb
 l l l
 bbbbb
 l l l
  bbb
-`,
-`
+`, //c: dinos!
+    `
 ggggg
 gg
 gg  g
@@ -40,8 +40,8 @@ const G = {
 };
 
 options = {
-    viewSize: {x: G.WIDTH, y: G.HEIGHT},
-    theme: "shapeDark",
+    viewSize: { x: G.WIDTH, y: G.HEIGHT },
+    //theme: "shapeDark",
     isReplayEnabled: true,
     // isPlayingBgm: true,
     seed: 3,
@@ -58,6 +58,13 @@ options = {
 * @property { Number } stopSpeed
 * @property { Number } throwCooldown
 * @property { Number } throwCooldownCount
+*/
+
+/**
+* @typedef { object } Dino
+* @property { Color } color
+* @property { Vector } pos
+* @property { Vector } velocity
 */
 
 /**
@@ -79,7 +86,13 @@ let player;
 /**
 * @type  { Rock[] }
 */
-let rocks, dinos;
+let rocks;
+
+/**
+* @type  { Dino[] }
+*/
+let dinos;
+
 
 function update() {
 
@@ -89,18 +102,15 @@ function update() {
 
     RenderPlayer();
 
-    SpawnRocks();    
+    SpawnRocks();
     RenderRocks();
-
+    SpawnDino();
     RenderDinos();
 
     ThrowInput();
-
-    console.log(rocks.length);
 }
 
-function Start()
-{
+function Start() {
     player = {
         color: "cyan",
         pos: vec(G.WIDTH * 0.5, G.HEIGHT * 0.5),
@@ -113,11 +123,9 @@ function Start()
 
     rocks = [];
     dinos = [];
-    //times(10, () => {SpawnDino();});
 }
 
-function RenderPlayer()
-{
+function RenderPlayer() {
     let currInput = vec(input.pos.x, input.pos.y);
     let inputVector = vec(currInput.x - player.pos.x,
         currInput.y - player.pos.y);
@@ -126,7 +134,7 @@ function RenderPlayer()
 
     let newVelocity = vec(inputDirection.x * inputLength * player.speed,
         inputDirection.y * inputLength * player.speed);
-    
+
     player.pos.add(player.velocity.add(newVelocity));
 
     player.velocity = newVelocity;
@@ -139,117 +147,85 @@ function RenderPlayer()
 }
 
 function SpawnRocks() {
-    if(ticks % (60) == 0) { //TODO: add?: || rocks.length < 1
-    rocks.push({
-        color: "black",
-        pos: vec(0, rnd((G.HEIGHT * 0.15), (G.HEIGHT * .5))),
-        velocity: vec(rnd(3,6), 0),
-        decel: 0.95,
-        Enablegravity: false,
-        stopSpeed: 1,
-        throwCooldown: 60,
-        throwCooldownCount: 0,
-    })
+    if (ticks % (60) == 0) { //TODO: add?: || rocks.length < 1
+        rocks.push({
+            color: "black",
+            pos: vec(0, rnd((G.HEIGHT * 0.15), (G.HEIGHT * .5))),
+            velocity: vec(rnd(G.ROCK_VELOCITY_X_MIN, G.ROCK_VELOCITY_X_MAX), 0),
+            decel: 0.95,
+            Enablegravity: false,
+            stopSpeed: 1,
+            throwCooldown: 60,
+            throwCooldownCount: 0,
+        })
+    }
 }
-
-function SpawnDino(){
+function SpawnDino() {
     //spawns a dino
-    dinos.push({
-        color: "green",
-        pos: vec(0, rnd((G.HEIGHT * 0.15), (G.HEIGHT * .5))),
-        velocity: vec(rnd(G.ROCK_VELOCITY_X_MIN,G.ROCK_VELOCITY_X_MAX), 0),
-        decel: 0.95,
-        Enablegravity: false,
-        stopSpeed: 1,
-        throwCooldown: 60,
-        throwCooldownCount: 0,
-    });
+    if (ticks % (60) == 0) { //TODO: add?: || rocks.length < 1
+        dinos.push({
+            color: "green",
+            pos: vec(0, rnd(G.HEIGHT * 0.15, G.HEIGHT * .5)),
+            velocity: vec(rnd(3, 4), 0),
+        });
+    }
 }
 
-}
-
-function RenderRocks()
-{
+function RenderRocks() {
     rocks.forEach(rock => {
         // let slowDownVector = DecelVector(rock.velocity, rock.decel);
         // rock.velocity = slowDownVector;
 
-        if(rock.velocity.length <= rock.stopSpeed)
-        {
+        if (rock.velocity.length <= rock.stopSpeed) {
             rock.velocity = vec(0, 0);
         }
-        else
-        {
+        else {
             rock.pos.add(rock.velocity);
         }
 
         color(rock.color);
         // let isOnPlayer = box(rock.pos.x, rock.pos.y, 10)
         //     .isColliding.rect.cyan;
-        let isOnPlayer = char("a",rock.pos.x, rock.pos.y, {})
-             .isColliding.rect.cyan;
+        let isOnPlayer = char("a", rock.pos.x, rock.pos.y, {})
+            .isColliding.rect.cyan;
 
-        if(isOnPlayer && rock.throwCooldownCount == 0)
-        {
+        if (isOnPlayer && rock.throwCooldownCount == 0) {
             player.selected = rock;
         }
 
-        if(rock.throwCooldownCount != 0)
-        {
+        if (rock.throwCooldownCount != 0) {
             rock.throwCooldownCount--;
         }
     });
     remove(rocks, (rock) => {
         //rock.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
-        if(rock.pos.x > G.WIDTH || rock.pos.y > G.HEIGHT) //TODO: G.WIDTH + rock.width, G.HEIGHT + rock.height
+        if (rock.pos.x > G.WIDTH || rock.pos.y > G.HEIGHT) //TODO: G.WIDTH + rock.width, G.HEIGHT + rock.height
             return true;
         return false;
     });
 }
 
-function RenderDinos()
-{
+function RenderDinos() {
     //used to render in the dinos
     dinos.forEach(dino => {
         // let slowDownVector = DecelVector(rock.velocity, rock.decel);
         // rock.velocity = slowDownVector;
-
-        if(dino.velocity.length <= dino.stopSpeed)
-        {
-            dino.velocity = vec(0, 0);
-        }
-        else
-        {
-            dino.pos.add(dino.velocity);
-        }
-
+        dino.pos.add(dino.velocity);
         dino.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
-
+        console.log(dino.velocity);
         color(dino.color);
-        let isOnPlayer = char("c", 50, 50).isColliding.char.cyan; //where we wanna swap out a sprite
-
-        if(isOnPlayer && dino.throwCooldownCount == 0)
-        {
-            player.selected = dino;
-        }
-
-        if(dino.throwCooldownCount != 0)
-        {
-            dino.throwCooldownCount--;
-        }
+        let isOnPlayer = char("c", 50, 50).isColliding.char.black; //where we wanna swap out a sprite
     });
 }
 
-function ThrowInput()
-{
-    if(input.isPressed && player.selected != null)
-    {
+function ThrowInput() {
+    if (input.isPressed && player.selected != null) {
         player.selected.throwCooldownCount = player.selected.throwCooldown;
 
         player.selected.velocity = vec(player.velocity.x * player.throwSpeed,
             player.velocity.y * player.throwSpeed);
+        player.selected.Enablegravity = true;
         player.selected = null;
-        player.selected.Enablegravity == true;
     }
 }
 
@@ -259,8 +235,7 @@ function GameOver() {
     end();
 }
 
-function DecelVector(toDecel, decel)
-{
+function DecelVector(toDecel, decel) {
     return vec(toDecel.x * decel,
         toDecel.y * decel)
 }
