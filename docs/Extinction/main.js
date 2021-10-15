@@ -21,12 +21,12 @@ bbbbb
  bbb
 `, //c: dinoArray!
     `
-ggggg
-gg  g
- gggg
-ggggg
- gggg
-gg gg
+gggggg
+g gggg
+gggg
+  gggg
+ ggggg
+  g  g
 `
 ];
 
@@ -75,6 +75,7 @@ options = {
 * @property { Number } timer
 * @property { Boolean } direction
 * @property { number } turnInterval
+* @property { number } flip
 */
 
 /**
@@ -214,6 +215,7 @@ function SpawnDinos() {
             timer: 0,
             direction: true,
             turnInterval: rndi(4, 6),
+            flip: 1,
         });
     }
 }
@@ -286,25 +288,54 @@ function RenderDinos()
     remove(dinoArray, dino => {
         // let slowDownVector = rock.velocity.mult() rock.decel);
         // rock.velocity = slowDownVector;
-
+        let isCollideWithRock;
+        dino.pos.add(dino.velocity);
+        dino.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
+        color(dino.color);
         //we can change velocity to change it's direction based on the timer variable
         //don't forget, dino.velocity/dino.timer refers to that specific dinos var
         if (ticks % (60) == 0){ //need something like this so that they don't move in unison (can't just use dino.timer += ticks)
             dino.timer++;
         }
         if(dino.timer%dino.turnInterval == 0 && dino.direction){
-            dino.velocity.x *= -1;
+            //dino.velocity.x *= -1;
             dino.direction = false;
+            //dino.flip = -1;
+            
         }
         else if(dino.timer%dino.turnInterval != 0 && dino.direction == false){
-            dino.velocity.x *= -1;
+            //dino.velocity.x *= -1;
             dino.direction = true;
+            //dino.flip = 1;
+            
         }
-        dino.pos.add(dino.velocity);
-        dino.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
-        color(dino.color);
-        let isCollideWithRock = char("c", dino.pos.x, dino.pos.y, 
-            {scale: {x: dino.size, y: dino.size}}).isColliding.char.a; //where we wanna swap out a sprite
+        if(dino.direction == false){
+            if(dino.velocity.x>=-1){
+                dino.velocity.x-=.1;
+            }
+            if(dino.velocity.x <= 0){
+                dino.flip = -1;
+            }
+            
+        }
+        else if(dino.direction){
+            if(dino.velocity.x<=1){
+                dino.velocity.x += .01;
+            }
+            if(dino.velocity.x >= 0){
+                dino.flip = 1;
+            }
+                       
+        }
+        if(dino.flip == 1){
+            isCollideWithRock = char("c", dino.pos.x , dino.pos.y, 
+            {mirror:{x: 1, y: 1}, scale: {x: dino.size, y: dino.size}}).isColliding.char.a;
+        }
+        else if (dino.flip == -1){
+            isCollideWithRock = char("c", dino.pos.x , dino.pos.y, 
+            {mirror:{x: -1, y: 1}, scale: {x: dino.size, y: dino.size}}).isColliding.char.a;
+        }
+         //where we wanna swap out a sprite
         
             //{scale: {x: dino.size, y: dino.size}}).isColliding.rect.light_black; //where we wanna swap out a sprite
         if(isCollideWithRock) { //the asteriod has hit the dino!
