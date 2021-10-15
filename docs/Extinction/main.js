@@ -1,7 +1,8 @@
 title = "Extinction";
 
 description = `
-thing`;
+hit asteroids into dinos
+avoid friendlies`;
 
 characters = [
     //a: asteroids (AKA rockArray)
