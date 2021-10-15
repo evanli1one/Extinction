@@ -105,7 +105,6 @@ let rockArray;
 */
 let dinoArray;
 
-
 let gravityEnableHeight = G.HEIGHT * 0.3
 let groundHeight = G.HEIGHT * 0.7
 
@@ -207,11 +206,11 @@ function SpawnDinos() {
         dinoArray.push({
             color: "green",
             pos: vec(0, rnd(groundHeight + 10, G.HEIGHT - 3)),
-            velocity: vec(rnd(1, 3), 0),
+            velocity: vec(rnd(0.25, 1), 0),
             size: 3,
             timer: 0,
             direction: true,
-            turnInterval: rndi(2,4),
+            turnInterval: rndi(4, 6),
         });
     }
 }
@@ -280,7 +279,7 @@ function RenderHeatEffects(rock)
 function RenderDinos()
 {
     //used to render in the dinoArray
-    dinoArray.forEach(dino => {
+    remove(dinoArray, dino => {
         // let slowDownVector = rock.velocity.mult() rock.decel);
         // rock.velocity = slowDownVector;
 
@@ -301,8 +300,9 @@ function RenderDinos()
         dino.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
         color(dino.color);
         let isCollideWithRock = char("c", dino.pos.x, dino.pos.y, 
-        {scale: {x: dino.size, y: dino.size}}).isColliding.char.black; //where we wanna swap out a sprite
-        //console.log(isCollideWithRock);
+            {scale: {x: dino.size, y: dino.size}}).isColliding.rect.light_black; //where we wanna swap out a sprite
+        
+        return isCollideWithRock;
     });
 }
 
