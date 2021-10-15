@@ -73,6 +73,7 @@ options = {
 * @property { Vector } velocity
 * @property { Number } size
 * @property { Number } timer
+* @property { Boolean } direction
 */
 
 /**
@@ -208,6 +209,7 @@ function SpawnDinos() {
             velocity: vec(rnd(1, 3), 0),
             size: 3,
             timer: 0,
+            direction: true,
         });
     }
 }
@@ -285,11 +287,13 @@ function RenderDinos()
         if (ticks % (60) == 0){ //need something like this so that they don't move in unison (can't just use dino.timer += ticks)
             dino.timer++;
         }
-        if(dino.timer == 12){
-            dino.velocity = vec(rnd(1, 3), 0);
-        }
-        else if(dino.timer==3){
+        if(dino.timer%2 == 0 && dino.direction){
             dino.velocity.x *= -1;
+            dino.direction = false;
+        }
+        else if(dino.timer%2 != 0 && dino.direction == false){
+            dino.velocity.x *= -1;
+            dino.direction = true;
         }
         dino.pos.add(dino.velocity);
         dino.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
