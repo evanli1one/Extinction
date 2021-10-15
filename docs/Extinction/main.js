@@ -271,7 +271,8 @@ function RenderFriendly()
         isCollideWithRock = char("b", friend.pos.x , friend.pos.y, 
             {scale: {x: friend.size, y: friend.size}}).isColliding.char.a;
         if(isCollideWithRock) { //the asteriod has hit the friendly!
-            score-=1;
+            let minus = -5;
+            addScore(minus,friend.pos);
             //score (subtract from score for hitting the friendly)
             //sound (make a nice explosion sound or equivalent)
             //particle (make a red splat or explosion or equivalent)
@@ -400,13 +401,15 @@ function RenderDinos()
             //{scale: {x: dino.size, y: dino.size}}).isColliding.rect.light_black; //where we wanna swap out a sprite
         if(isCollideWithRock) { //the asteriod has hit the dino!
             //score
-            if(lastkill + 10 >= ticks){
-                score+=Math.pow(2,(killcombo+1));
+            let points;
+            if(lastkill + 20 >= ticks){
+                points=Math.pow(2,(killcombo+1));
                 killcombo++;
             } else {
-                score+=1;
+                points=1;
                 killcombo = 0;
             }
+            addScore(points,dino.pos);
             lastkill = ticks;
             //score (add to score for hitting the dino)
             //sound (make a nice explosion sound or equivalent)
