@@ -276,9 +276,9 @@ function RenderDinos()
         // rock.velocity = slowDownVector;
         dino.pos.add(dino.velocity);
         dino.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
-
         color(dino.color);
-        let isOnPlayer = char("c", dino.pos.x, dino.pos.y, {scale: {x: dino.size, y: dino.size}}).isColliding.char.black; //where we wanna swap out a sprite
+        let isCollideWithRock = char("c", dino.pos.x, dino.pos.y, {scale: {x: dino.size, y: dino.size}}).isColliding.char.black; //where we wanna swap out a sprite
+        //console.log(isCollideWithRock);
     });
 }
 
