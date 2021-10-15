@@ -22,11 +22,11 @@ bbbbb
 `, //c: dinoArray!
     `
 ggggg
-gg
 gg  g
-gggggg
+ gggg
 ggggg
-gg  gg
+ gggg
+gg gg
 `
 ];
 
@@ -107,6 +107,7 @@ let dinoArray;
 
 let gravityEnableHeight = G.HEIGHT * 0.3
 let groundHeight = G.HEIGHT * 0.7
+let maxDinos = 10;
 
 function update() {
 
@@ -204,7 +205,7 @@ function SpawnRocks() {
 function SpawnDinos() {
     //spawns a dino
     //
-    if (ticks % (60) == 0) { //TODO: add?: || rockArray.length < 1
+    if (ticks % (60) == 0 && dinoArray.length < maxDinos) { //TODO: add?: || rockArray.length < 1
         dinoArray.push({
             color: "green",
             pos: vec(0, rnd(groundHeight + 10, G.HEIGHT - 3)),
@@ -307,6 +308,7 @@ function RenderDinos()
         
             //{scale: {x: dino.size, y: dino.size}}).isColliding.rect.light_black; //where we wanna swap out a sprite
         if(isCollideWithRock) { //the asteriod has hit the dino!
+            score+=1;
             //score (add to score for hitting the dino)
             //sound (make a nice explosion sound or equivalent)
             //particle (make a red splat or explosion or equivalent)
