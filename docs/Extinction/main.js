@@ -4,13 +4,31 @@ description = `
 thing`;
 
 characters = [
+//a: asteroids (AKA rocks)
+`
+ llll
+ll lll 
+l ll l
+lll ll
+ llll
+`,
+//b: UFO (AKA player)
+`
+ bbb
+l l l
+bbbbb
+l l l
+ bbb
+`
 ];
 
 const G = {
-    WIDTH: 600,
-    HEIGHT: 600,
+    WIDTH: 300,
+    HEIGHT: 300,
 
     GRAVITY: 2,
+    ROCK_VELOCITY_X_MIN: 1.5,
+    ROCK_VELOCITY_X_MAX: 3,
 };
 
 options = {
@@ -63,9 +81,12 @@ function update() {
 
     RenderPlayer();
 
+    SpawnRocks();    
     RenderRocks();
 
     ThrowInput();
+
+    console.log(rocks.length);
 }
 
 function Start()
@@ -81,7 +102,6 @@ function Start()
     }
 
     rocks = [];
-    times(10, () => {SpawnRock()});
 }
 
 function RenderPlayer()
@@ -106,17 +126,20 @@ function RenderPlayer()
     box(player.pos.x, player.pos.y, 20);
 }
 
-function SpawnRock() {
+function SpawnRocks() {
+    if(ticks % (60) == 0) { //TODO: add?: || rocks.length < 1
     rocks.push({
         color: "green",
         pos: vec(0, rnd((G.HEIGHT * 0.15), (G.HEIGHT * .5))),
-        velocity: vec(rnd(3,6), 0),
+        velocity: vec(rnd(G.ROCK_VELOCITY_X_MIN,G.ROCK_VELOCITY_X_MAX), 0),
         decel: 0.95,
         Enablegravity: false,
         stopSpeed: 1,
         throwCooldown: 60,
         throwCooldownCount: 0,
-    })
+    });
+}
+
 }
 
 function RenderRocks()
@@ -134,11 +157,11 @@ function RenderRocks()
             rock.pos.add(rock.velocity);
         }
 
-        rock.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
-
         color(rock.color);
-        let isOnPlayer = box(rock.pos.x, rock.pos.y, 10)
-            .isColliding.rect.cyan;
+        // let isOnPlayer = box(rock.pos.x, rock.pos.y, 10)
+        //     .isColliding.rect.cyan;
+        let isOnPlayer = char("a",rock.pos.x, rock.pos.y, {})
+             .isColliding.rect.cyan;
 
         if(isOnPlayer && rock.throwCooldownCount == 0)
         {
@@ -149,6 +172,12 @@ function RenderRocks()
         {
             rock.throwCooldownCount--;
         }
+    });
+    remove(rocks, (rock) => {
+        //rock.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
+        if(rock.pos.x > G.WIDTH || rock.pos.y > G.HEIGHT) //TODO: G.WIDTH + rock.width, G.HEIGHT + rock.height
+            return true;
+        return false;
     });
 }
 
