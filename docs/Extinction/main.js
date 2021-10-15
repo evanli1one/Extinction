@@ -207,7 +207,7 @@ function SpawnDinos() {
             pos: vec(0, rnd(groundHeight + 10, G.HEIGHT - 3)),
             velocity: vec(rnd(1, 3), 0),
             size: 3,
-            timer: 5,
+            timer: 0,
         });
     }
 }
@@ -282,6 +282,15 @@ function RenderDinos()
 
         //we can change velocity to change it's direction based on the timer variable
         //don't forget, dino.velocity/dino.timer refers to that specific dinos var
+        if (ticks % (60) == 0){ //need something like this so that they don't move in unison (can't just use dino.timer += ticks)
+            dino.timer++;
+        }
+        if(dino.timer == 12){
+            dino.velocity = vec(rnd(1, 3), 0);
+        }
+        else if(dino.timer==3){
+            dino.velocity.x *= -1;
+        }
         dino.pos.add(dino.velocity);
         dino.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
         color(dino.color);
