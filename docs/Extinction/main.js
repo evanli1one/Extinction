@@ -34,27 +34,33 @@ const G = {
     WIDTH: 300,
     HEIGHT: 300,
 
-    GRAVITY: 2,
+    GRAVITY: 0.1,
     ROCK_VELOCITY_X_MIN: 1.5,
     ROCK_VELOCITY_X_MAX: 3,
 };
 
 options = {
     viewSize: { x: G.WIDTH, y: G.HEIGHT },
-    //theme: "shapeDark",
+    theme: "dark",
     isReplayEnabled: true,
     // isPlayingBgm: true,
     seed: 3,
     isDrawingScoreFront: true,
+    isDrawingParticleFront: true,
 };
 
 /**
 * @typedef { object } Rock
 * @property { Color } color
+* @property { Color } hotColor
+* @property { Color } particleColor1
+* @property { Color } particleColor2
 * @property { Vector } pos
 * @property { Vector } velocity
-* @property { boolean } Enablegravity
+* @property { Boolean } enableGravity
+* @property { Number } size
 * @property { Number } decel
+* @property { Number } offScreenDist
 * @property { Number } stopSpeed
 * @property { Number } throwCooldown
 * @property { Number } throwCooldownCount
@@ -65,6 +71,7 @@ options = {
 * @property { Color } color
 * @property { Vector } pos
 * @property { Vector } velocity
+* @property { Number } size
 */
 
 /**
@@ -72,9 +79,11 @@ options = {
 * @property { Color } color
 * @property { Vector } pos
 * @property { Vector } velocity
+* @property { Number } size
 * @property { Number } decel
 * @property { Number } speed
 * @property { Number } throwSpeed
+* @property { Number } bounciness
 * @property { Rock } selected
 */
 
@@ -94,16 +103,22 @@ let rocks;
 let dinos;
 
 
+let gravityEnableHeight = G.HEIGHT * 0.3
+let groundHeight = G.HEIGHT * 0.7
+
 function update() {
 
     if (!ticks) {
         Start();
     }
 
+    RenderBackground();
+
     RenderPlayer();
 
     SpawnRocks();
     RenderRocks();
+
     SpawnDino();
     RenderDinos();
 
@@ -115,9 +130,11 @@ function Start() {
         color: "cyan",
         pos: vec(G.WIDTH * 0.5, G.HEIGHT * 0.5),
         velocity: vec(0, 0),
+        size: 10,
         decel: 0.9,
         speed: 0.1,
-        throwSpeed: 3,
+        throwSpeed: 2,
+        bounciness: 0.25,
         selected: null
     }
 
@@ -138,22 +155,40 @@ function RenderPlayer() {
     player.pos.add(player.velocity.add(newVelocity));
 
     player.velocity = newVelocity;
-    player.velocity = DecelVector(player.velocity, player.decel);
+    player.velocity.mul(player.decel);
 
-    player.pos.clamp(0, G.WIDTH, 0, G.HEIGHT);
+    player.pos.clamp(player.size/2, G.WIDTH - player.size/2,
+        player.size/2, gravityEnableHeight - player.size/2);
 
     color(player.color);
-    box(player.pos.x, player.pos.y, 20);
+    box(player.pos.x, player.pos.y, player.size);
+}
+
+function RenderBackground()
+{
+    color("black");
+    rect(0, 0, G.WIDTH, gravityEnableHeight);
+    color("light_cyan");
+    rect(0, gravityEnableHeight, G.WIDTH, G.HEIGHT);
+
+    color("light_green");
+    rect(0, groundHeight, G.WIDTH, G.HEIGHT);
 }
 
 function SpawnRocks() {
     if (ticks % (60) == 0) { //TODO: add?: || rocks.length < 1
         rocks.push({
-            color: "black",
-            pos: vec(0, rnd((G.HEIGHT * 0.15), (G.HEIGHT * .5))),
-            velocity: vec(rnd(G.ROCK_VELOCITY_X_MIN, G.ROCK_VELOCITY_X_MAX), 0),
+            color: "light_black",
+            hotColor: "red",
+            particleColor1: "red",
+            particleColor2: "yellow",
+            pos: vec(0,
+                rnd(G.HEIGHT * 0.1, gravityEnableHeight - G.HEIGHT * 0.1)),
+            velocity: vec(rnd(0.5,2), 0),
             decel: 0.95,
-            Enablegravity: false,
+            enableGravity: false,
+            size: 10,
+            offScreenDist: 20,
             stopSpeed: 1,
             throwCooldown: 60,
             throwCooldownCount: 0,
@@ -165,29 +200,31 @@ function SpawnDino() {
     if (ticks % (60) == 0) { //TODO: add?: || rocks.length < 1
         dinos.push({
             color: "green",
-            pos: vec(0, rnd(G.HEIGHT * 0.15, G.HEIGHT * .5)),
-            velocity: vec(rnd(3, 4), 0),
+            pos: vec(0, rnd(groundHeight + 10, G.HEIGHT - 3)),
+            velocity: vec(rnd(3,6), 0),
+            size: 3,
         });
     }
 }
 
-function RenderRocks() {
-    rocks.forEach(rock => {
-        // let slowDownVector = DecelVector(rock.velocity, rock.decel);
-        // rock.velocity = slowDownVector;
-
-        if (rock.velocity.length <= rock.stopSpeed) {
-            rock.velocity = vec(0, 0);
-        }
-        else {
-            rock.pos.add(rock.velocity);
-        }
+function RenderRocks()
+{
+    remove(rocks, rock => {
+        rock.pos.add(rock.velocity);
 
         color(rock.color);
-        // let isOnPlayer = box(rock.pos.x, rock.pos.y, 10)
-        //     .isColliding.rect.cyan;
-        let isOnPlayer = char("a", rock.pos.x, rock.pos.y, {})
+        let isOnPlayer = box(rock.pos.x, rock.pos.y, rock.size)
             .isColliding.rect.cyan;
+        
+        if(rock.enableGravity && rock.pos.y > gravityEnableHeight)
+        {
+            // Decelerate rock
+            // rock.velocity.mul(rock.decel);
+            
+            rock.velocity.add(vec(0, G.GRAVITY));
+
+            RenderHeatEffects(rock);
+        }
 
         if (isOnPlayer && rock.throwCooldownCount == 0) {
             player.selected = rock;
@@ -196,6 +233,8 @@ function RenderRocks() {
         if (rock.throwCooldownCount != 0) {
             rock.throwCooldownCount--;
         }
+        return (!rock.pos.isInRect(-rock.offScreenDist, -rock.offScreenDist,
+            2*rock.offScreenDist + G.WIDTH, 2*rock.offScreenDist + G.HEIGHT));
     });
     remove(rocks, (rock) => {
         //rock.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
@@ -205,16 +244,41 @@ function RenderRocks() {
     });
 }
 
-function RenderDinos() {
+function RenderHeatEffects(rock)
+{
+    color(rock.particleColor1);
+    let forwardAngle = atan2(rock.velocity.y, rock.velocity.x);
+    let backAngle = forwardAngle + PI;
+    let offRockDist = rock.size / 4;
+    let randOffsetX = rndi(-offRockDist - rock.size / 2, offRockDist + rock.size / 2);
+    let randOffsetY = rndi(-offRockDist - rock.size / 2, offRockDist + rock.size / 2);
+    particle(rock.pos.x + randOffsetX, rock.pos.y + randOffsetY,
+        1, 2, backAngle, PI/4);
+    color(rock.particleColor2);
+    particle(rock.pos.x + randOffsetX, rock.pos.y + randOffsetY,
+        1, 2, backAngle, PI/4);
+
+    let offsetDist1 = -0.1;
+    let radius1 = rock.size * 0.7;
+    let angle1 = PI * 0.5;
+    let size1 = 3;
+
+    color(rock.particleColor1);
+    arc(rock.pos.x + rock.velocity.x * offsetDist1, rock.pos.y + rock.velocity.y * offsetDist1,
+        radius1, size1, forwardAngle - angle1/2, forwardAngle + angle1/2);
+}
+
+function RenderDinos()
+{
     //used to render in the dinos
     dinos.forEach(dino => {
-        // let slowDownVector = DecelVector(rock.velocity, rock.decel);
+        // let slowDownVector = rock.velocity.mult() rock.decel);
         // rock.velocity = slowDownVector;
         dino.pos.add(dino.velocity);
         dino.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
-        console.log(dino.velocity);
+
         color(dino.color);
-        let isOnPlayer = char("c", 50, 50).isColliding.char.black; //where we wanna swap out a sprite
+        let isOnPlayer = char("c", dino.pos.x, dino.pos.y, {scale: {x: dino.size, y: dino.size}}).isColliding.char.black; //where we wanna swap out a sprite
     });
 }
 
@@ -222,20 +286,30 @@ function ThrowInput() {
     if (input.isPressed && player.selected != null) {
         player.selected.throwCooldownCount = player.selected.throwCooldown;
 
-        player.selected.velocity = vec(player.velocity.x * player.throwSpeed,
-            player.velocity.y * player.throwSpeed);
-        player.selected.Enablegravity = true;
+        SetHitVelocity(player.selected);
+
+        player.selected.enableGravity = true;
+
         player.selected = null;
     }
+}
+
+function SetHitVelocity(rock)
+{
+    let bounceDirection = vec(rock.pos.x - player.pos.x,
+        rock.pos.y - player.pos.y).normalize();
+    
+    let previousMagnitude = rock.velocity.length;
+
+    let bounceVel = vec(bounceDirection.x * previousMagnitude,
+        bounceDirection.y * previousMagnitude).mul(player.bounciness)
+
+    rock.velocity = vec(player.velocity.x * player.throwSpeed + bounceVel.x,
+        player.velocity.y * player.throwSpeed + bounceVel.y);
 }
 
 function GameOver() {
     play("lucky");
 
     end();
-}
-
-function DecelVector(toDecel, decel) {
-    return vec(toDecel.x * decel,
-        toDecel.y * decel)
 }
