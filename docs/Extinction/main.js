@@ -191,7 +191,7 @@ function SpawnRocks() {
             velocity: vec(rnd(0.5,2), 0),
             decel: 0.95,
             enableGravity: false,
-            size: 10,
+            size: 2,
             offScreenDist: 20,
             stopSpeed: 1,
             throwCooldown: 60,
@@ -221,9 +221,10 @@ function RenderRocks()
         rock.pos.add(rock.velocity);
 
         color(rock.color);
-        let isOnPlayer = box(rock.pos.x, rock.pos.y, rock.size)
-            .isColliding.char.b;
-        
+        //let isOnPlayer = box(rock.pos.x, rock.pos.y, rock.size)
+            //.isColliding.char.b;
+        let isOnPlayer = char("a", rock.pos.x, rock.pos.y, 
+            {scale: {x: rock.size, y: rock.size}}).isColliding.char.b;
         if(rock.enableGravity && rock.pos.y > gravityEnableHeight)
         {
             // Decelerate rock
@@ -300,7 +301,7 @@ function RenderDinos()
         dino.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
         color(dino.color);
         let isCollideWithRock = char("c", dino.pos.x, dino.pos.y, 
-            {scale: {x: dino.size, y: dino.size}}).isColliding.rect.light_black; //where we wanna swap out a sprite
+            {scale: {x: dino.size, y: dino.size}}).isColliding.char.a; //where we wanna swap out a sprite
         
         return isCollideWithRock;
     });
