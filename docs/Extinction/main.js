@@ -15,18 +15,18 @@ lll ll
 `,
     //b: UFO (AKA player)
     `
- LLL
-LLLLL
+ ppp
+ppppp
 l l l
-LLLLL
- LLL
+ppppp
+ ppp
 `,    //c: UFO (AKA player)
 `
- LLL
-LLLLL
+ ppp
+ppppp
  l l
-LLLLL
- LLL
+ppppp
+ ppp
 `, //d: dino (frame 1 of 2)
     `
 gggggg
@@ -108,6 +108,7 @@ options = {
 * @property { Color } color
 * @property { Vector } pos
 * @property { Vector } velocity
+* @property { Number } health
 * @property { Number } size
 * @property { Number } decel
 * @property { Number } speed
@@ -140,14 +141,13 @@ let skyTopHeight = G.HEIGHT * 0.3
 let groundHeight = G.HEIGHT * 0.7
 let maxDinos = 10, maxFriends = 3;
 
-// Score Combo
-let lastkill;
-let killcombo;
-
 function update() {
 
     if (!ticks) {
         Start();
+    }
+    if(player.health <= 0) {
+        end();
     }
 
     //star system (create a render function to render the stars and have each star move across the screen and wrap around)
@@ -174,6 +174,7 @@ function Start() {
         color: "cyan",
         pos: vec(G.WIDTH * 0.5, G.HEIGHT * 0.5),
         velocity: vec(0, 0),
+        health: 100,
         size: 10,
         decel: 0.9,
         speed: 0.1,
@@ -186,9 +187,6 @@ function Start() {
     rockArray = [];
     dinoArray = [];
     friendlyArray = [];
-
-    lastkill = 0;
-    killcombo = 0;
 }
 
 function RenderPlayer() {
@@ -209,8 +207,8 @@ function RenderPlayer() {
     player.pos.clamp(player.size/2, G.WIDTH - player.size/2,
         player.size/2, skyTopHeight - player.size/2);
 
-    // color(player.color);
-    // box(player.pos.x, player.pos.y, player.size);
+    color("black");
+    text(player.health + "/" + 100 + " HP", G.WIDTH / 2.4, 3);
     color("black");
     char(addWithCharCode("b", floor(ticks / 15) % 2), player.pos.x, player.pos.y, {scale: {x: 3, y: 3}});
 }
@@ -288,8 +286,7 @@ function RenderFriendly()
         isCollideWithRock = char(addWithCharCode("b", floor(ticks / 15) % 2), friend.pos.x , friend.pos.y, 
             {scale: {x: friend.size, y: friend.size}}).isColliding.char.a;
         if(isCollideWithRock) { //the asteriod has hit the friendly!
-            let minus = -5;
-            addScore(minus,friend.pos);
+            score-=1;
             //score (subtract from score for hitting the friendly)
             //sound (make a nice explosion sound or equivalent)
             //particle (make a red splat or explosion or equivalent)
@@ -420,17 +417,7 @@ function RenderDinos()
         
             //{scale: {x: dino.size, y: dino.size}}).isColliding.rect.light_black; //where we wanna swap out a sprite
         if(isCollideWithRock) { //the asteriod has hit the dino!
-            //score
-            let points;
-            if(lastkill + 20 >= ticks){
-                points=Math.pow(2,(killcombo+1));
-                killcombo++;
-            } else {
-                points=1;
-                killcombo = 0;
-            }
-            addScore(points,dino.pos);
-            lastkill = ticks;
+            score+=1;
             //score (add to score for hitting the dino)
             //sound (make a nice explosion sound or equivalent)
             //particle (make a red splat or explosion or equivalent)
@@ -446,6 +433,9 @@ function ThrowInput() {
         //particles (make some small spark/collision type particle for hitting the asteriod with the UFO)
         //
         SetHitVelocity(player.selected);
+        
+        //player loses HP
+        player.health -= 5;
 
         player.selected.enableGravity = true;
 
