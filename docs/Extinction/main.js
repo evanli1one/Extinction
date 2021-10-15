@@ -15,9 +15,9 @@ lll ll
     //b: UFO (AKA player)
     `
  bbb
-l l l
 bbbbb
 l l l
+bbbbb
  bbb
 `, //c: dinoArray!
     `
@@ -44,7 +44,7 @@ options = {
     theme: "dark",
     isReplayEnabled: true,
     // isPlayingBgm: true,
-    seed: 3,
+    seed: 3, //sound (find a good seed to get the right sounds and background music for the game)
     isDrawingScoreFront: true,
     isDrawingParticleFront: true,
 };
@@ -114,6 +114,7 @@ function update() {
         Start();
     }
 
+    //star system (create a render function to render the stars and have each star move across the screen and wrap around)
     RenderBackground();
 
     RenderPlayer();
@@ -139,7 +140,8 @@ function Start() {
         bounciness: 0.25,
         selected: null
     }
-
+    //star system (spawn a number of stars within the top rectangle of the game field)
+        //top rectangle is between X: 0 to G.WIDTH, Y: 0 to gravityEnableHeight
     rockArray = [];
     dinoArray = [];
 }
@@ -303,6 +305,12 @@ function RenderDinos()
         let isCollideWithRock = char("c", dino.pos.x, dino.pos.y, 
             {scale: {x: dino.size, y: dino.size}}).isColliding.char.a; //where we wanna swap out a sprite
         
+            //{scale: {x: dino.size, y: dino.size}}).isColliding.rect.light_black; //where we wanna swap out a sprite
+        if(isCollideWithRock) { //the asteriod has hit the dino!
+            //score (add to score for hitting the dino)
+            //sound (make a nice explosion sound or equivalent)
+            //particle (make a red splat or explosion or equivalent)
+        }
         return isCollideWithRock;
     });
 }
@@ -310,7 +318,9 @@ function RenderDinos()
 function ThrowInput() {
     if (input.isPressed && player.selected != null) {
         player.selected.throwCooldownCount = player.selected.throwCooldown;
-
+        //sound (add some sound indicator for the UFO hitting the asteroid)
+        //particles (make some small spark/collision type particle for hitting the asteriod with the UFO)
+        //
         SetHitVelocity(player.selected);
 
         player.selected.enableGravity = true;
