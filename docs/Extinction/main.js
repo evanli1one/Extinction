@@ -124,6 +124,10 @@ let skyTopHeight = G.HEIGHT * 0.3
 let groundHeight = G.HEIGHT * 0.7
 let maxDinos = 10, maxFriends = 3;
 
+// Score Combo
+let lastkill;
+let killcombo;
+
 function update() {
 
     if (!ticks) {
@@ -166,6 +170,9 @@ function Start() {
     rockArray = [];
     dinoArray = [];
     friendlyArray = [];
+
+    lastkill = 0;
+    killcombo = 0;
 }
 
 function RenderPlayer() {
@@ -392,7 +399,15 @@ function RenderDinos()
         
             //{scale: {x: dino.size, y: dino.size}}).isColliding.rect.light_black; //where we wanna swap out a sprite
         if(isCollideWithRock) { //the asteriod has hit the dino!
-            score+=1;
+            //score
+            if(lastkill + 10 >= ticks){
+                score+=Math.pow(2,(killcombo+1));
+                killcombo++;
+            } else {
+                score+=1;
+                killcombo = 0;
+            }
+            lastkill = ticks;
             //score (add to score for hitting the dino)
             //sound (make a nice explosion sound or equivalent)
             //particle (make a red splat or explosion or equivalent)
