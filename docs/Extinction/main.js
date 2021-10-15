@@ -80,6 +80,14 @@ options = {
 */
 
 /**
+* @typedef { object } Friendly
+* @property { Color } color
+* @property { Vector } pos
+* @property { Vector } velocity
+* @property { Number } size
+*/
+
+/**
 * @typedef { object } Player
 * @property { Color } color
 * @property { Vector } pos
@@ -107,9 +115,14 @@ let rockArray;
 */
 let dinoArray;
 
-let gravityEnableHeight = G.HEIGHT * 0.3
+/**
+* @type  { Friendly[] }
+*/
+let friendlyArray;
+
+let skyTopHeight = G.HEIGHT * 0.3
 let groundHeight = G.HEIGHT * 0.7
-let maxDinos = 10;
+let maxDinos = 10, maxFriends = 3;
 
 function update() {
 
@@ -128,6 +141,11 @@ function update() {
     SpawnDinos();
     RenderDinos();
 
+    //spawn friendlies
+    SpawnFriendly();
+    //render friendlies
+    RenderFriendly();
+
     ThrowInput();
 }
 
@@ -144,9 +162,10 @@ function Start() {
         selected: null
     }
     //star system (spawn a number of stars within the top rectangle of the game field)
-        //top rectangle is between X: 0 to G.WIDTH, Y: 0 to gravityEnableHeight
+        //top rectangle is between X: 0 to G.WIDTH, Y: 0 to skyTopHeight
     rockArray = [];
     dinoArray = [];
+    friendlyArray = [];
 }
 
 function RenderPlayer() {
@@ -165,7 +184,7 @@ function RenderPlayer() {
     player.velocity.mul(player.decel);
 
     player.pos.clamp(player.size/2, G.WIDTH - player.size/2,
-        player.size/2, gravityEnableHeight - player.size/2);
+        player.size/2, skyTopHeight - player.size/2);
 
     // color(player.color);
     // box(player.pos.x, player.pos.y, player.size);
@@ -176,9 +195,9 @@ function RenderPlayer() {
 function RenderBackground()
 {
     color("white");
-    rect(0, 0, G.WIDTH, gravityEnableHeight);
+    rect(0, 0, G.WIDTH, skyTopHeight);
     color("light_cyan");
-    rect(0, gravityEnableHeight, G.WIDTH, G.HEIGHT);
+    rect(0, skyTopHeight, G.WIDTH, G.HEIGHT);
 
     color("light_green");
     rect(0, groundHeight, G.WIDTH, G.HEIGHT);
@@ -192,7 +211,7 @@ function SpawnRocks() {
             particleColor1: "red",
             particleColor2: "yellow",
             pos: vec(0,
-                rnd(G.HEIGHT * 0.1, gravityEnableHeight - G.HEIGHT * 0.1)),
+                rnd(G.HEIGHT * 0.1, skyTopHeight - G.HEIGHT * 0.1)),
             velocity: vec(rnd(0.5,2), 0),
             decel: 0.95,
             enableGravity: false,
@@ -221,6 +240,39 @@ function SpawnDinos() {
     }
 }
 
+function SpawnFriendly() {
+    //spawns a dino
+    //
+    if (ticks % (60) == 0 && friendlyArray.length < maxFriends) { //TODO: add?: || rockArray.length < 1
+        friendlyArray.push({
+            color: "black",
+            pos: vec(0, rnd(skyTopHeight + 10, groundHeight - 3)),
+            velocity: vec(rnd(0.25, 1), 0),
+            size: 3,
+        });
+    }
+}
+function RenderFriendly()
+{
+    remove(friendlyArray, friend => {
+
+        let isCollideWithRock;
+        friend.pos.add(friend.velocity);
+        friend.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
+        color(friend.color);
+
+        isCollideWithRock = char("b", friend.pos.x , friend.pos.y, 
+            {scale: {x: friend.size, y: friend.size}}).isColliding.char.a;
+        if(isCollideWithRock) { //the asteriod has hit the friendly!
+            score-=1;
+            //score (subtract from score for hitting the friendly)
+            //sound (make a nice explosion sound or equivalent)
+            //particle (make a red splat or explosion or equivalent)
+        }
+        return isCollideWithRock;
+    });
+}
+
 function RenderRocks()
 {
     remove(rockArray, rock => {
@@ -231,7 +283,7 @@ function RenderRocks()
             //.isColliding.char.b;
         let isOnPlayer = char("a", rock.pos.x, rock.pos.y, 
             {scale: {x: rock.size, y: rock.size}}).isColliding.char.b;
-        if(rock.enableGravity && rock.pos.y > gravityEnableHeight)
+        if(rock.enableGravity && rock.pos.y > skyTopHeight)
         {
             // Decelerate rock
             // rock.velocity.mul(rock.decel);
