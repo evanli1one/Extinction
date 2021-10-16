@@ -29,19 +29,18 @@ ppppp
  ppp
 `, //d: dino (frame 1 of 2)
     `
-gggggg
-g gggg
 gggg
-  gggg
+gRgg
+gggg
  ggggg
-  g  g
+ gggg
+ g  g
 `, //e: dino (frame 1 of 2)
     `
-gggggg
-g gggg
 gggg
-  gggg
-ggggg
+gRgg
+gggggg
+ gggg
  g  g
 `
 ];
@@ -59,8 +58,8 @@ options = {
     viewSize: { x: G.WIDTH, y: G.HEIGHT },
     theme: "dark",
     isReplayEnabled: true,
-    // isPlayingBgm: true,
-    seed: 3, //sound (find a good seed to get the right sounds and background music for the game)
+    isPlayingBgm: true,
+    seed: 4,
     isDrawingScoreFront: true,
     isDrawingParticleFront: true,
 };
@@ -109,6 +108,8 @@ options = {
 * @property { Vector } pos
 * @property { Vector } velocity
 * @property { Number } health
+* @property { Number } maxHealth
+* @property { Number } healthLoss
 * @property { Number } size
 * @property { Number } decel
 * @property { Number } speed
@@ -151,7 +152,7 @@ function update() {
         Start();
     }
     if(player.health <= 0) {
-        end();
+        GameOver();
     }
 
     //star system (create a render function to render the stars and have each star move across the screen and wrap around)
@@ -179,6 +180,8 @@ function Start() {
         pos: vec(G.WIDTH * 0.5, G.HEIGHT * 0.5),
         velocity: vec(0, 0),
         health: 100,
+        maxHealth: 100,
+        healthLoss: 5,
         size: 10,
         decel: 0.9,
         speed: 0.1,
@@ -212,7 +215,7 @@ function RenderPlayer() {
         player.size/2, skyTopHeight - player.size/2);
 
     color("black");
-    text(player.health + "/" + 100 + " HP", G.WIDTH / 2.4, 3);
+    text(player.health + "/" + player.maxHealth + " HP", G.WIDTH / 2.4, 3);
     color("black");
     char(addWithCharCode("b", floor(ticks / 15) % 2), player.pos.x, player.pos.y, {scale: {x: 3, y: 3}});
 }
@@ -249,18 +252,19 @@ function SpawnRocks() {
         });
     }
 }
+
 function SpawnDinos() {
     //spawns a dino
     //
     if (ticks % (60) == 0 && dinoArray.length < maxDinos) { //TODO: add?: || rockArray.length < 1
         dinoArray.push({
-            color: "green",
+            color: "black",
             pos: vec(0, rnd(groundHeight + 10, G.HEIGHT - 3)),
-            velocity: vec(rnd(0.25, 1), 0),
+            velocity: vec(rnd(0.1, 1), 0),
             size: 3,
             timer: 0,
             direction: true,
-            turnInterval: rndi(4, 6),
+            turnInterval: rndi(5, 8),
             flip: 1,
         });
     }
@@ -278,6 +282,7 @@ function SpawnFriendly() {
         });
     }
 }
+
 function RenderFriendly()
 {
     remove(friendlyArray, friend => {
@@ -292,8 +297,8 @@ function RenderFriendly()
             if(isCollideWithRock) { //the asteriod has hit the friendly!
                 let minus = -5;
                 addScore(minus,friend.pos);
-                //score (subtract from score for hitting the friendly)
-                //sound (make a nice explosion sound or equivalent)
+                player.health -= player.healthLoss;
+                play("select");
                 //particle (make a red splat or explosion or equivalent)
             }
         return isCollideWithRock;
@@ -381,20 +386,14 @@ function RenderDinos()
             dino.timer++;
         }
         if(dino.timer%dino.turnInterval == 0 && dino.direction){
-            //dino.velocity.x *= -1;
             dino.direction = false;
-            //dino.flip = -1;
-            
         }
         else if(dino.timer%dino.turnInterval != 0 && dino.direction == false){
-            //dino.velocity.x *= -1;
             dino.direction = true;
-            //dino.flip = 1;
-            
         }
         if(dino.direction == false){
             if(dino.velocity.x>=-1){
-                dino.velocity.x-=.1;
+                dino.velocity.x-=.01;
             }
             if(dino.velocity.x <= 0){
                 dino.flip = -1;
@@ -412,31 +411,32 @@ function RenderDinos()
         }
         if(dino.flip == 1){
             isCollideWithRock = char(addWithCharCode("d", floor((ticks + (dino.timer)) / 30) % 2), dino.pos.x , dino.pos.y, 
-            {mirror:{x: 1, y: 1}, scale: {x: dino.size, y: dino.size}}).isColliding.char.a;
+            {mirror:{x: -1, y: 1}, scale: {x: dino.size, y: dino.size}}).isColliding.char.a;
         }
         else if (dino.flip == -1){
             isCollideWithRock = char(addWithCharCode("d", floor((ticks + (dino.timer)) / 30) % 2), dino.pos.x , dino.pos.y, 
-            {mirror:{x: -1, y: 1}, scale: {x: dino.size, y: dino.size}}).isColliding.char.a;
+            {mirror:{x: 1, y: 1}, scale: {x: dino.size, y: dino.size}}).isColliding.char.a;
         }
-         //where we wanna swap out a sprite
-        
-            //{scale: {x: dino.size, y: dino.size}}).isColliding.rect.light_black; //where we wanna swap out a sprite
-            if(isCollideWithRock) { //the asteriod has hit the dino!
-                //score
-                let points;
-                if(lastkill + 20 >= ticks){
-                    points=Math.pow(2,(killcombo+1));
-                    killcombo++;
-                } else {
-                    points=1;
-                    killcombo = 0;
-                }
-                addScore(points,dino.pos);
-                lastkill = ticks;
-                //score (add to score for hitting the dino)
-                //sound (make a nice explosion sound or equivalent)
-                //particle (make a red splat or explosion or equivalent)
+
+        if(isCollideWithRock) { //the asteriod has hit the dino!
+            //score
+            let points;
+            if(lastkill + 20 >= ticks){
+                points=Math.pow(2,(killcombo+1));
+                killcombo++;
+            } else {
+                points=1;
+                killcombo = 0;
             }
+            addScore(points, dino.pos);
+            lastkill = ticks;
+
+            AddHealth(points * 5);
+
+            play("explosion");
+            play("coin");
+            //particle (make a red splat or explosion or equivalent)
+        }
         return isCollideWithRock;
     });
 }
@@ -444,13 +444,12 @@ function RenderDinos()
 function ThrowInput() {
     if (input.isPressed && player.selected != null) {
         player.selected.throwCooldownCount = player.selected.throwCooldown;
-        //sound (add some sound indicator for the UFO hitting the asteroid)
+        play("hit");
         //particles (make some small spark/collision type particle for hitting the asteriod with the UFO)
-        //
         SetHitVelocity(player.selected);
         
         //player loses HP
-        player.health -= 5;
+        player.health -= player.healthLoss;
 
         player.selected.enableGravity = true;
 
@@ -470,6 +469,18 @@ function SetHitVelocity(rock)
 
     rock.velocity = vec(player.velocity.x * player.throwSpeed + bounceVel.x,
         player.velocity.y * player.throwSpeed + bounceVel.y);
+}
+
+function AddHealth(toAdd)
+{
+    if(toAdd + player.health > player.maxHealth)
+    {
+        player.health = player.maxHealth;
+    }
+    else
+    {
+        player.health += toAdd;
+    }
 }
 
 function GameOver() {
