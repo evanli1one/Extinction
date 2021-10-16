@@ -60,7 +60,7 @@ options = {
     viewSize: { x: G.WIDTH, y: G.HEIGHT },
     theme: "dark",
     isReplayEnabled: true,
-    isPlayingBgm: true,
+    // isPlayingBgm: true,
     seed: 4,
     isDrawingScoreFront: true,
     isDrawingParticleFront: true,
@@ -122,6 +122,14 @@ options = {
 */
 
 /**
+* @typedef { object } BackgroundObject
+* @property { Color } color
+* @property { Vector } pos
+* @property { Vector } velocity
+* @property { Number } size
+*/
+
+/**
 * @type  { Player }
 */
 let player;
@@ -129,17 +137,32 @@ let player;
 /**
 * @type  { Rock[] }
 */
-let rockArray;
+let rockArray = [];
 
 /**
 * @type  { Dino[] }
 */
-let dinoArray;
+let dinoArray = [];
 
 /**
 * @type  { Friendly[] }
 */
-let friendlyArray;
+let friendlyArray = [];
+
+/**
+* @type  { BackgroundObject[] }
+*/
+let starArray = [];
+
+/**
+* @type  { BackgroundObject[] }
+*/
+let windArray = [];
+
+/**
+* @type  { BackgroundObject[] }
+*/
+let grassArray = [];
 
 let skyTopHeight = G.HEIGHT * 0.3
 let groundHeight = G.HEIGHT * 0.7
@@ -199,11 +222,10 @@ function Start() {
         bounciness: 0.25,
         selected: null
     }
-    //star system (spawn a number of stars within the top rectangle of the game field)
-        //top rectangle is between X: 0 to G.WIDTH, Y: 0 to skyTopHeight
-    rockArray = [];
-    dinoArray = [];
-    friendlyArray = [];
+
+    SpawnStars();
+    SpawnWind();
+    SpawnGrass();
 }
 
 function RenderPlayer() {
@@ -239,6 +261,63 @@ function RenderBackground()
 
     color("light_green");
     rect(0, groundHeight, G.WIDTH, G.HEIGHT);
+
+    RenderBackgroundObject(starArray, "box");
+    RenderBackgroundObject(windArray, "box");
+    RenderBackgroundObject(grassArray, "line");
+}
+
+function RenderBackgroundObject(array, type)
+{
+    array.forEach(item => {
+        item.pos.add(item.velocity);
+        item.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
+        color(item.color);
+        if(type == "box")
+        {
+            box(item.pos.x, item.pos.y, item.size);
+        }
+        if(type == "line")
+        {
+            rect(item.pos.x, item.pos.y, item.size, 3);
+        }
+    });
+}
+
+function SpawnStars() {
+    times(8, () => {
+        starArray.push({
+            color: "black",
+            pos: vec(rnd(0, G.WIDTH),
+                rnd(5, skyTopHeight - G.HEIGHT * 0.01)),
+            velocity: vec(-0.25, 0),
+            size: 1,
+        });
+    });
+}
+
+function SpawnWind() {
+    times(16, () => {
+        windArray.push({
+            color: "cyan",
+            pos: vec(rnd(0, G.WIDTH),
+                rnd(skyTopHeight + 5, groundHeight - G.HEIGHT * 0.01)),
+            velocity: vec(-0.5, 0),
+            size: 2,
+        });
+    });
+}
+
+function SpawnGrass() {
+    times(32, () => {
+        grassArray.push({
+            color: "green",
+            pos: vec(rnd(0, G.WIDTH),
+                rnd(groundHeight + 5, G.HEIGHT)),
+            velocity: vec(-1, 0),
+            size: 1,
+        });
+    });
 }
 
 function SpawnRocks() {
@@ -285,7 +364,7 @@ function SpawnFriendly() {
     if (ticks % (60 * 3) == 0 && friendlyArray.length < maxFriends) { //TODO: add?: || rockArray.length < 1
         friendlyArray.push({
             color: "black",
-            pos: vec(-20, rnd(skyTopHeight + 10, groundHeight - 5)),
+            pos: vec(-20, rnd(skyTopHeight + 10, groundHeight - 30)),
             velocity: vec(rnd(0.6, 1), 0),
             size: 2,
         });
@@ -448,7 +527,7 @@ function RenderDinos()
             addScore(points, dino.pos);
             lastkill = ticks;
 
-            AddHealth(5 + Math.round(points/4));
+            AddHealth(5 + Math.floor(points/4));
 
             play("explosion");
             play("coin");
