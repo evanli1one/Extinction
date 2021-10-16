@@ -208,6 +208,7 @@ function update() {
 }
 
 function Start() {
+    ClearAll();
     player = {
         color: "cyan",
         pos: vec(G.WIDTH * 0.5, G.HEIGHT * 0.5),
@@ -297,7 +298,7 @@ function SpawnStars() {
 }
 
 function SpawnWind() {
-    times(16, () => {
+    times(12, () => {
         windArray.push({
             color: "cyan",
             pos: vec(rnd(0, G.WIDTH),
@@ -309,7 +310,7 @@ function SpawnWind() {
 }
 
 function SpawnGrass() {
-    times(32, () => {
+    times(16, () => {
         grassArray.push({
             color: "green",
             pos: vec(rnd(0, G.WIDTH),
@@ -387,7 +388,10 @@ function RenderFriendly()
                 addScore(minus, friend.pos);
                 player.health -= player.healthLoss;
                 play("select");
-                //particle (make a red splat or explosion or equivalent)
+
+                color("purple");
+                particle(friend.pos.x, friend.pos.y,
+                    30, 3, 0, 2*PI);
             }
         return isCollideWithRock;
     });
@@ -398,8 +402,6 @@ function RenderRocks()
     remove(rockArray, rock => {
         rock.pos.add(rock.velocity);
         color(rock.color);
-        //let isOnPlayer = box(rock.pos.x, rock.pos.y, rock.size)
-            //.isColliding.char.b;
         let isOnPlayer = char("a", rock.pos.x, rock.pos.y, 
             {scale: {x: rock.size, y: rock.size}, rotation: rock.rotation}).isColliding.char.b;
         if(!isOnPlayer) {
@@ -447,9 +449,9 @@ function RenderHeatEffects(rock)
     particle(rock.pos.x + randOffsetX, rock.pos.y + randOffsetY,
         1, 2, backAngle, PI/4);
 
-    let offsetDist1 = -0.1;
-    let radius1 = rock.size * 0.7;
-    let angle1 = PI * 0.5;
+    let offsetDist1 = 1;
+    let radius1 = rock.size * 3;
+    let angle1 = PI * 0.75;
     let size1 = 3;
 
     color(rock.particleColor1);
@@ -531,7 +533,13 @@ function RenderDinos()
 
             play("explosion");
             play("coin");
-            //particle (make a red splat or explosion or equivalent)
+
+            color("red");
+            particle(dino.pos.x, dino.pos.y,
+                10, 4, -PI/2, PI/3);
+            color("yellow");
+            particle(dino.pos.x, dino.pos.y,
+                20, 2, 0, 2*PI);
         }
         return isCollideWithRock;
     });
@@ -541,7 +549,7 @@ function ThrowInput() {
     if (player.selected != null) {
         player.selected.throwCooldownCount = player.selected.throwCooldown;
         play("hit");
-        //particles (make some small spark/collision type particle for hitting the asteriod with the UFO)
+
         SetHitVelocity(player.selected);
         
         //player loses HP
@@ -560,11 +568,32 @@ function SetHitVelocity(rock)
     
     let previousMagnitude = rock.velocity.length;
 
+    RenderHitEffect(rock);
+
     let bounceVel = vec(bounceDirection.x * previousMagnitude,
         bounceDirection.y * previousMagnitude).mul(player.bounciness)
 
     rock.velocity = vec(player.velocity.x * player.throwSpeed + bounceVel.x,
         player.velocity.y * player.throwSpeed + bounceVel.y);
+}
+
+function RenderHitEffect(rock)
+{
+    let hitAngle = atan2(rock.pos.y - player.pos.y,
+        rock.pos.x - player.pos.x);
+    
+    color("light_yellow");
+    particle(player.pos.x, player.pos.y,
+        10, 2, hitAngle, PI/4);
+    
+    let offsetDist1 = 1;
+    let radius1 = player.size * 2;
+    let angle1 = PI * .2;
+    let size1 = 6;
+
+    color("light_purple");
+    arc(player.pos.x + player.velocity.x * offsetDist1, player.pos.y + player.velocity.y * offsetDist1,
+        radius1, size1, hitAngle - angle1/2, hitAngle + angle1/2);
 }
 
 function AddHealth(toAdd)
@@ -595,4 +624,16 @@ function GameOver() {
     play("lucky");
 
     end();
+}
+
+function ClearAll()
+{
+    currDifficulty = -1;
+    remove(dinoArray, () =>{
+        return true;
+    });
+
+    remove(friendlyArray, () =>{
+        return true;
+    });
 }
