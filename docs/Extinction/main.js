@@ -49,6 +49,8 @@ const G = {
     WIDTH: 300,
     HEIGHT: 300,
 
+    WRAPOFFSET: 50,
+
     GRAVITY: 0.1,
     ROCK_VELOCITY_X_MIN: 1.5,
     ROCK_VELOCITY_X_MAX: 3,
@@ -87,9 +89,10 @@ options = {
 * @property { Color } color
 * @property { Vector } pos
 * @property { Vector } velocity
+* @property { Vector } startVelocity
 * @property { Number } size
 * @property { Number } timer
-* @property { Boolean } direction
+* @property { Boolean } isGoingLeft
 * @property { number } turnInterval
 * @property { number } flip
 */
@@ -140,11 +143,16 @@ let friendlyArray;
 
 let skyTopHeight = G.HEIGHT * 0.3
 let groundHeight = G.HEIGHT * 0.7
-let maxDinos = 10, maxFriends = 3;
+let maxDinos = 12, maxFriends = 3;
+let trueMaxFriends = 5
 
 // Score Combo
 let lastkill;
 let killcombo;
+
+const dinoSpeedIncrease = 0.2;
+let currDifficulty = -1;
+let difficultyInterval = 15;
 
 function update() {
 
@@ -154,6 +162,8 @@ function update() {
     if(player.health <= 0) {
         GameOver();
     }
+    
+    DifficultyScaling();
 
     //star system (create a render function to render the stars and have each star move across the screen and wrap around)
     RenderBackground();
@@ -181,7 +191,7 @@ function Start() {
         velocity: vec(0, 0),
         health: 100,
         maxHealth: 100,
-        healthLoss: 5,
+        healthLoss: 10,
         size: 10,
         decel: 0.9,
         speed: 0.1,
@@ -238,9 +248,9 @@ function SpawnRocks() {
             hotColor: "red",
             particleColor1: "red",
             particleColor2: "yellow",
-            pos: vec(0,
+            pos: vec(-20,
                 rnd(G.HEIGHT * 0.1, skyTopHeight - G.HEIGHT * 0.1)),
-            velocity: vec(rnd(0.5,2), 0),
+            velocity: vec(rnd(0.5, 1), 0),
             decel: 0.95,
             enableGravity: false,
             size: 2,
@@ -254,31 +264,30 @@ function SpawnRocks() {
 }
 
 function SpawnDinos() {
-    //spawns a dino
-    //
-    if (ticks % (60) == 0 && dinoArray.length < maxDinos) { //TODO: add?: || rockArray.length < 1
+    if (ticks % (30) == 0 && dinoArray.length < maxDinos) {
+        let thisSpeedIncrease = currDifficulty * dinoSpeedIncrease;
+        let thisXSpeed = rnd(0.3 + thisSpeedIncrease, 0.6 + thisSpeedIncrease);
         dinoArray.push({
             color: "black",
-            pos: vec(0, rnd(groundHeight + 10, G.HEIGHT - 3)),
-            velocity: vec(rnd(0.1, 1), 0),
-            size: 3,
+            pos: vec(-20, rnd(groundHeight + 10, G.HEIGHT - 10)),
+            velocity: vec(thisXSpeed, 0),
+            startVelocity: vec(thisXSpeed, 0),
+            size: 4,
             timer: 0,
-            direction: true,
-            turnInterval: rndi(5, 8),
+            isGoingLeft: true,
+            turnInterval: rndi(5, 10),
             flip: 1,
         });
     }
 }
 
 function SpawnFriendly() {
-    //spawns a dino
-    //
-    if (ticks % (60) == 0 && friendlyArray.length < maxFriends) { //TODO: add?: || rockArray.length < 1
+    if (ticks % (60 * 3) == 0 && friendlyArray.length < maxFriends) { //TODO: add?: || rockArray.length < 1
         friendlyArray.push({
             color: "black",
-            pos: vec(0, rnd(skyTopHeight + 10, groundHeight - 3)),
-            velocity: vec(rnd(0.25, 1), 0),
-            size: 3,
+            pos: vec(-20, rnd(skyTopHeight + 10, groundHeight - 5)),
+            velocity: vec(rnd(0.6, 1), 0),
+            size: 2,
         });
     }
 }
@@ -289,14 +298,14 @@ function RenderFriendly()
 
         let isCollideWithRock;
         friend.pos.add(friend.velocity);
-        friend.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
+        friend.pos.wrap(-G.WRAPOFFSET, G.WIDTH + G.WRAPOFFSET, 0, G.HEIGHT);
         color(friend.color);
 
         isCollideWithRock = char(addWithCharCode("b", floor(ticks / 15) % 2), friend.pos.x , friend.pos.y, 
             {scale: {x: friend.size, y: friend.size}}).isColliding.char.a;
             if(isCollideWithRock) { //the asteriod has hit the friendly!
                 let minus = -5;
-                addScore(minus,friend.pos);
+                addScore(minus, friend.pos);
                 player.health -= player.healthLoss;
                 play("select");
                 //particle (make a red splat or explosion or equivalent)
@@ -339,7 +348,6 @@ function RenderRocks()
             2*rock.offScreenDist + G.WIDTH, 2*rock.offScreenDist + G.HEIGHT));
     });
     remove(rockArray, (rock) => {
-        //rock.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
         if (rock.pos.x > G.WIDTH || rock.pos.y > G.HEIGHT) //TODO: G.WIDTH + rock.width, G.HEIGHT + rock.height
             return true;
         return false;
@@ -378,31 +386,40 @@ function RenderDinos()
         // rock.velocity = slowDownVector;
         let isCollideWithRock;
         dino.pos.add(dino.velocity);
-        dino.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
+        dino.pos.wrap(-G.WRAPOFFSET, G.WIDTH + G.WRAPOFFSET, 0, G.HEIGHT);
         color(dino.color);
         //we can change velocity to change it's direction based on the timer variable
         //don't forget, dino.velocity/dino.timer refers to that specific dinos var
         if (ticks % (60) == 0){ //need something like this so that they don't move in unison (can't just use dino.timer += ticks)
             dino.timer++;
         }
-        if(dino.timer%dino.turnInterval == 0 && dino.direction){
-            dino.direction = false;
+        if(dino.timer%dino.turnInterval == 0){
+            dino.timer++;
+
+            if(dino.isGoingLeft)
+            {
+                dino.timer += Math.round(dino.turnInterval / 4);
+                dino.isGoingLeft = false;
+            }
+            else
+            {
+                
+                dino.isGoingLeft = true;
+            }
         }
-        else if(dino.timer%dino.turnInterval != 0 && dino.direction == false){
-            dino.direction = true;
-        }
-        if(dino.direction == false){
-            if(dino.velocity.x>=-1){
-                dino.velocity.x-=.01;
+        
+        if(dino.isGoingLeft == false){
+            if(dino.velocity.x > -dino.startVelocity.x){
+                dino.velocity.x -=.005;
             }
             if(dino.velocity.x <= 0){
                 dino.flip = -1;
             }
             
         }
-        else if(dino.direction){
-            if(dino.velocity.x<=1){
-                dino.velocity.x += .01;
+        else if(dino.isGoingLeft){
+            if(dino.velocity.x < dino.startVelocity.x){
+                dino.velocity.x += .005;
             }
             if(dino.velocity.x >= 0){
                 dino.flip = 1;
@@ -431,7 +448,7 @@ function RenderDinos()
             addScore(points, dino.pos);
             lastkill = ticks;
 
-            AddHealth(points * 5);
+            AddHealth(5 + Math.round(points/4));
 
             play("explosion");
             play("coin");
@@ -442,7 +459,7 @@ function RenderDinos()
 }
 
 function ThrowInput() {
-    if (input.isPressed && player.selected != null) {
+    if (player.selected != null) {
         player.selected.throwCooldownCount = player.selected.throwCooldown;
         play("hit");
         //particles (make some small spark/collision type particle for hitting the asteriod with the UFO)
@@ -480,6 +497,18 @@ function AddHealth(toAdd)
     else
     {
         player.health += toAdd;
+    }
+}
+
+function DifficultyScaling()
+{
+    if(ticks % (60 * difficultyInterval) == 0)
+    {
+        if(maxFriends < trueMaxFriends)
+        {
+            maxFriends += 1
+        }
+        currDifficulty++;
     }
 }
 
