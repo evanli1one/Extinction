@@ -60,8 +60,9 @@ options = {
     viewSize: { x: G.WIDTH, y: G.HEIGHT },
     theme: "dark",
     isReplayEnabled: true,
-    // isPlayingBgm: true,
-    seed: 4,
+    isPlayingBgm: true,
+    // alt seed: 4
+    seed: 12,
     isDrawingScoreFront: true,
     isDrawingParticleFront: true,
 };
@@ -173,7 +174,7 @@ let trueMaxFriends = 5
 let lastkill;
 let killcombo;
 
-const dinoSpeedIncrease = 0.2;
+const dinoSpeedIncrease = 0.1;
 let currDifficulty = -1;
 let difficultyInterval = 15;
 
@@ -329,7 +330,7 @@ function SpawnRocks() {
             particleColor1: "red",
             particleColor2: "yellow",
             pos: vec(-20,
-                rnd(G.HEIGHT * 0.1, skyTopHeight - G.HEIGHT * 0.1)),
+                rnd(G.HEIGHT * 0.05, skyTopHeight - G.HEIGHT * 0.02)),
             velocity: vec(rnd(0.5, 1), 0),
             decel: 0.95,
             enableGravity: false,
@@ -522,6 +523,14 @@ function RenderDinos()
             if(lastkill + 20 >= ticks){
                 points=Math.pow(2,(killcombo+1));
                 killcombo++;
+                if(points == 2)
+                {
+                    play("coin");
+                }
+                if(points >= 4)
+                {
+                    play("powerUp");
+                }
             } else {
                 points=1;
                 killcombo = 0;
@@ -529,10 +538,9 @@ function RenderDinos()
             addScore(points, dino.pos);
             lastkill = ticks;
 
-            AddHealth(5 + Math.floor(points/4));
+            AddHealth(5 + Math.floor(points/2));
 
             play("explosion");
-            play("coin");
 
             color("red");
             particle(dino.pos.x, dino.pos.y,
@@ -549,6 +557,7 @@ function ThrowInput() {
     if (player.selected != null) {
         player.selected.throwCooldownCount = player.selected.throwCooldown;
         play("hit");
+        play("laser");
 
         SetHitVelocity(player.selected);
         
